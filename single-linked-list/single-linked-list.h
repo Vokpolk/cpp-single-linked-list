@@ -55,7 +55,6 @@ class SingleLinkedList {
         // При ValueType, совпадающем с const Type, играет роль конвертирующего конструктора
         BasicIterator(const BasicIterator<Type>& other) noexcept {
             node_ = other.node_;
-
         }
 
         // Чтобы компилятор не выдавал предупреждение об отсутствии оператора = при наличии
@@ -72,34 +71,19 @@ class SingleLinkedList {
         // Оператор проверки итераторов на неравенство
         // Противоположен !=
         [[nodiscard]] bool operator!=(const BasicIterator<const Type>& rhs) const noexcept {
-            if (node_ != rhs.node_) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return node_ != rhs.node_;
         }
 
         // Оператор сравнения итераторов (в роли второго аргумента итератор)
         // Два итератора равны, если они ссылаются на один и тот же элемент списка либо на end()
         [[nodiscard]] bool operator==(const BasicIterator<Type>& rhs) const noexcept {
-            if (node_ == rhs.node_) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return node_ == rhs.node_;
         }
 
         // Оператор проверки итераторов на неравенство
         // Противоположен !=
         [[nodiscard]] bool operator!=(const BasicIterator<Type>& rhs) const noexcept {
-            if (node_ != rhs.node_) {
-                return true;
-            }
-            else {
-                return false;
-            }
+            return node_ != rhs.node_;
         }
 
         // Оператор прединкремента. После его вызова итератор указывает на следующий элемент списка
@@ -149,17 +133,11 @@ public:
     using ConstIterator = BasicIterator<const Type>;
 
     SingleLinkedList(std::initializer_list<Type> values) {
-        Node* last = nullptr;
-        for (auto i = values.begin(); i != values.end(); i++) {
-            CreateNode(*i, &last);
-        }
+        CreateNode(values.begin(), values.end());
     }
 
     SingleLinkedList(const SingleLinkedList& other) {
-        Node* last = nullptr;
-        for (Node* n = other.head_.next_node; n != nullptr; n = n->next_node) {
-            CreateNode(n->value, &last);
-        }
+        CreateNode(other.begin(), other.end());
     }
 
     // Возвращает итератор, указывающий на позицию перед первым элементом односвязного списка.
@@ -286,8 +264,8 @@ public:
             Node* p = head_.next_node;
             head_.next_node = head_.next_node->next_node;
             delete p;
-            size_--;
         }
+        size_ = 0;
     }
 
     // Возвращает количество элементов в списке
@@ -297,7 +275,7 @@ public:
 
     // Сообщает, пустой ли список
     [[nodiscard]] bool IsEmpty() const noexcept {
-        return !GetSize();
+        return GetSize() == 0;
     }
 
 private:
@@ -305,16 +283,22 @@ private:
     Node head_ = Node();
     size_t size_ = 0;
 
-    void CreateNode(Type value, Node** last) {
-        Node* node = new Node(value, nullptr);
-        if (!(head_.next_node)) {
-            head_.next_node = node;
+    template <typename Iter>
+    void CreateNode(Iter* value_begin, Iter* value_end) {
+        Node* last = nullptr;
+        
+        while (value_begin != value_end) {
+            Node* node = new Node(*value_begin, nullptr);
+            if (!(head_.next_node)) {
+                head_.next_node = node;
+            }
+            else {
+                (last)->next_node = node;
+            }
+            last = node;
+            size_++;
+            value_begin++;
         }
-        else {
-            (*last)->next_node = node;
-        }
-        *last = node;
-        size_++;
     }
 };
 
@@ -328,8 +312,7 @@ bool operator==(const SingleLinkedList<Type>& lhs, const SingleLinkedList<Type>&
     if (lhs.GetSize() != rhs.GetSize()) {
         return false;
     }
-
-    std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+    return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
 template <typename Type>
